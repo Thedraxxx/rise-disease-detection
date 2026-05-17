@@ -1,0 +1,64 @@
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.result__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.result__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.result__cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.result__info {
+  background: var(--coffee-white);
+  border: 0.5px solid var(--coffee-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.result__disease {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.result__description {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.result__treatment-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.4rem;
+}
+
+.result__treatment {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  padding-left: 12px;
+  border-left: 2px solid var(--coffee-light);
+}

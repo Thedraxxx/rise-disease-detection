@@ -1,0 +1,62 @@
+.model-card {
+  background: var(--coffee-white);
+  border: 0.5px solid var(--coffee-border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.1rem;
+  transition: border-color 0.2s;
+}
+
+.model-card--best {
+  border: 1.5px solid var(--coffee-dark);
+}
+
+.model-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.model-card__name {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.model-card__badge {
+  font-size: 10px;
+  background: var(--coffee-pale);
+  color: var(--coffee-dark);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.model-card__disease {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.model-card__bar {
+  height: 4px;
+  background: var(--coffee-border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.model-card__fill {
+  height: 100%;
+  background: var(--coffee-dark);
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+.model-card__conf {
+  font-size: 12px;
+  color: var(--text-muted);
+}
