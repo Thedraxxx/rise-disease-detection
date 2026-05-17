@@ -1,0 +1,24 @@
+# Virtual environment
+venv/
+
+# Uploads — temp images
+uploads/
+
+# Model files — too large for GitHub
+app/models/*.pt
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables
+.env
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
