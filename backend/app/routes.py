@@ -7,22 +7,18 @@ api = Blueprint("api", __name__)
 
 @api.route("/health", methods=["GET"])
 def health_check():
-    """Quick endpoint to check if server is running."""
     return success_response(data={"status": "running"}, message="Server is healthy")
 
 @api.route("/predict", methods=["POST"])
 def predict():
-    # 1. Check if image exists in request
     if "image" not in request.files:
         return error_response("No image provided", 400)
 
     file = request.files["image"]
 
-    # 2. Check if filename is empty
     if file.filename == "":
         return error_response("No image selected", 400)
 
-    # 3. Check if file type is allowed
     if not ImageService.is_allowed_file(file.filename):
         return error_response("File type not allowed. Use jpg, jpeg, png or webp", 400)
 
@@ -36,11 +32,15 @@ def predict():
         model_service = current_app.model_service
         results = model_service.predict_all(temp_path)
 
-        # 6. Get disease info for the winning model's disease
+        # 6. Check if image is relevant
+        if results.get("not_relevant"):
+            return error_response("Image does not appear to be a rice leaf. Please upload a valid rice plant image.", 422)
+
+        # 7. Get disease info for the winning model's disease
         best_disease = results[results["best_model"]]["disease"]
         disease_info = Config.DISEASE_INFO.get(best_disease, {})
 
-        # 7. Build final response
+        # 8. Build final response
         data = {
             "disease":     best_disease,
             "description": disease_info.get("description", ""),
@@ -59,6 +59,5 @@ def predict():
         return error_response(f"Prediction failed: {str(e)}", 500)
 
     finally:
-        # 8. Always delete temp image whether success or error
         if temp_path:
             ImageService.delete_temp_image(temp_path)

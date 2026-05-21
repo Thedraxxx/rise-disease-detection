@@ -15,7 +15,7 @@ class Config:
 
     # Model
     MODELS_FOLDER = os.path.join(BASE_DIR, "app", "models")
-    IMAGE_SIZE = (128, 128)  # size models expect
+    IMAGE_SIZE = (128, 128) 
 
     # Disease descriptions
     DISEASE_INFO = {
@@ -31,8 +31,4 @@ class Config:
         "description": "Leaf smut is caused by the fungus Entyloma oryzae. It appears as small, angular, black spots scattered on both leaf surfaces.",
         "treatment": "Apply fungicides like Carbendazim. Use certified disease-free seeds and maintain field hygiene."
     },
-    "Healthy": {
-        "description": "No disease detected. The rice leaf appears healthy.",
-        "treatment": "Continue standard crop management practices."
-    }
 }

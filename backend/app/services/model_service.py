@@ -2,11 +2,13 @@ import os
 import logging
 import torch
 import torch.nn as nn
+from torchvision import models, transforms
+from PIL import Image
 from config import Config
 
 logger = logging.getLogger(__name__)
 
-# CNN architecture - must match exactly how friend trained it
+# CNN architecture
 class CNN(nn.Module):
     def __init__(self):
         super().__init__()
@@ -45,7 +47,6 @@ class ModelService:
         self._load_models()
 
     def _load_models(self):
-        """Load all models once at server startup."""
         self.cnn_model    = self._load_cnn()
         self.resnet_model = self._load_resnet()
         self.yolo_model   = self._load_yolo()
@@ -66,12 +67,20 @@ class ModelService:
             return None
 
     def _load_resnet(self):
-        path = os.path.join(Config.MODELS_FOLDER, "resnet_model.pt")
+        path = os.path.join(Config.MODELS_FOLDER, "resnet_model.pth")
         if not os.path.exists(path):
             print("ResNet model not found. Using mock.")
             return None
-        # TODO: load actual model when .pt file is ready
-        return None
+        try:
+            model = models.resnet50(weights=None)
+            model.fc = nn.Linear(model.fc.in_features, 3)
+            model.load_state_dict(torch.load(path, map_location="cpu"))
+            model.eval()
+            print("[DEBUG] ResNet loaded successfully!")
+            return model
+        except Exception as e:
+            print(f"[ERROR] Failed to load ResNet: {e}")
+            return None
 
     def _load_yolo(self):
         path = os.path.join(Config.MODELS_FOLDER, "yolov8_model.pt")
@@ -88,30 +97,48 @@ class ModelService:
             print(f"[ERROR] Failed to load YOLOv8: {e}")
             return None
 
+    # def predict_all(self, image_path: str) -> dict:
+    #     cnn_result    = self._predict_cnn(image_path)
+    #     resnet_result = self._predict_resnet(image_path)
+    #     yolo_result   = self._predict_yolo(image_path)
+    #     best_model    = self._get_best_model(cnn_result, resnet_result, yolo_result)
+
+    #     return {
+    #         "cnn":        cnn_result,
+    #         "resnet":     resnet_result,
+    #         "yolo":       yolo_result,
+    #         "best_model": best_model
+    #     }
+
     def predict_all(self, image_path: str) -> dict:
-        """Run all 3 models and return combined results."""
+        yolo_result = self._predict_yolo(image_path)
+ 
+    # If YOLO finds nothing, skip CNN and ResNet
+        if yolo_result["disease"] == "Unknown":
+           return {
+            "cnn":        {"disease": "N/A", "confidence": 0.0},
+            "resnet":     {"disease": "N/A", "confidence": 0.0},
+            "yolo":       yolo_result,
+            "best_model": "yolo",
+            "not_relevant": True
+        }
+
         cnn_result    = self._predict_cnn(image_path)
         resnet_result = self._predict_resnet(image_path)
-        yolo_result   = self._predict_yolo(image_path)
-
-        best_model = self._get_best_model(cnn_result, resnet_result, yolo_result)
+        best_model    = self._get_best_model(cnn_result, resnet_result, yolo_result)
 
         return {
-            "cnn":        cnn_result,
-            "resnet":     resnet_result,
-            "yolo":       yolo_result,
-            "best_model": best_model
+        "cnn":        cnn_result,
+        "resnet":     resnet_result,
+        "yolo":       yolo_result,
+        "best_model": best_model,
+        "not_relevant": False
         }
+    
 
     def _predict_cnn(self, image_path: str) -> dict:
         if self.cnn_model is None:
-            return {
-                "disease":    "Brown Spot",
-                "confidence": 0.99
-            }
-
-        from torchvision import transforms
-        from PIL import Image
+            return {"disease": "Brown Spot", "confidence": 0.87}
 
         transform = transforms.Compose([
             transforms.Resize((128, 128)),
@@ -135,31 +162,38 @@ class ModelService:
 
     def _predict_resnet(self, image_path: str) -> dict:
         if self.resnet_model is None:
-            return {
-                "disease":    "Brown Spot",
-                "confidence": 0.45
-            }
-        # TODO: real inference when resnet_model.pt is ready
+            return {"disease": "Brown Spot", "confidence": 0.45}
+
+        transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
+
+        image = Image.open(image_path).convert("RGB")
+        tensor = transform(image).unsqueeze(0)
+
+        with torch.no_grad():
+            output = self.resnet_model(tensor)
+            probs = torch.softmax(output, dim=1)
+            conf, idx = torch.max(probs, dim=1)
+
+        classes = ["Bacterial Leaf Blight", "Brown Spot", "Leaf Smut"]
+        return {
+            "disease":    classes[idx.item()],
+            "confidence": round(conf.item(), 4)
+        }
 
     def _predict_yolo(self, image_path: str) -> dict:
         if self.yolo_model is None:
-            return {
-                "disease":    "Leaf Blast",
-                "confidence": 0.79,
-                "bbox":       [148, 135, 95, 60]
-            }
+            return {"disease": "Brown Spot", "confidence": 0.79, "bbox": [148, 135, 95, 60]}
 
         results = self.yolo_model(image_path)[0]
 
         if results.boxes is None or len(results.boxes) == 0:
-            return {
-                "disease":    "Healthy",
-                "confidence": 1.0,
-                "bbox":       None
-            }
+            return {"disease": "Unknown", "confidence": 0.0, "bbox": None}
 
         box = max(results.boxes, key=lambda b: float(b.conf))
-
         cls_id     = int(box.cls)
         confidence = round(float(box.conf), 4)
         x1, y1, x2, y2 = box.xyxy[0].tolist()
@@ -174,7 +208,6 @@ class ModelService:
         }
 
     def _get_best_model(self, cnn: dict, resnet: dict, yolo: dict) -> str:
-        """Return the model name with highest confidence."""
         scores = {
             "cnn":    cnn["confidence"],
             "resnet": resnet["confidence"],
