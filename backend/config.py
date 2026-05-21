@@ -19,24 +19,20 @@ class Config:
 
     # Disease descriptions
     DISEASE_INFO = {
-        "Leaf Blast": {
-            "description": "Leaf blast is caused by the fungus Magnaporthe oryzae. It appears as diamond-shaped lesions with gray centers and brown borders.",
-            "treatment": "Apply fungicides like Tricyclazole. Ensure proper field drainage and avoid excessive nitrogen fertilizer."
-        },
-        "Brown Spot": {
-            "description": "Brown spot is caused by Bipolaris oryzae. It appears as oval brown spots scattered across the leaf surface.",
-            "treatment": "Use fungicides like Iprodione. Improve soil nutrition, especially potassium levels."
-        },
-        "Bacterial Blight": {
-            "description": "Bacterial blight is caused by Xanthomonas oryzae. Leaves show water-soaked to yellowish stripes along margins.",
-            "treatment": "Use copper-based bactericides. Plant resistant varieties and avoid flood irrigation."
-        },
-        "Tungro": {
-            "description": "Tungro is a viral disease transmitted by green leafhoppers. Infected plants show yellow-orange discoloration.",
-            "treatment": "Control leafhopper population with insecticides. Use resistant varieties and remove infected plants."
-        },
-        "Healthy": {
-            "description": "No disease detected. The rice leaf appears healthy.",
-            "treatment": "Continue standard crop management practices."
-        }
+    "Brown Spot": {
+        "description": "Brown spot is caused by the fungus Bipolaris oryzae. It appears as oval to circular brown spots scattered across the leaf surface, often with a yellow halo.",
+        "treatment": "Use fungicides like Iprodione or Propiconazole. Improve soil nutrition especially potassium and silicon levels."
+    },
+    "Bacterial Leaf Blight": {
+        "description": "Bacterial leaf blight is caused by Xanthomonas oryzae pv. oryzae. Leaves show water-soaked to yellowish stripes along margins that turn white or gray.",
+        "treatment": "Use copper-based bactericides. Plant resistant varieties, avoid flood irrigation and excessive nitrogen."
+    },
+    "Leaf Smut": {
+        "description": "Leaf smut is caused by the fungus Entyloma oryzae. It appears as small, angular, black spots scattered on both leaf surfaces.",
+        "treatment": "Apply fungicides like Carbendazim. Use certified disease-free seeds and maintain field hygiene."
+    },
+    "Healthy": {
+        "description": "No disease detected. The rice leaf appears healthy.",
+        "treatment": "Continue standard crop management practices."
     }
+}

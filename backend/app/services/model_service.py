@@ -51,7 +51,7 @@ class ModelService:
         self.yolo_model   = self._load_yolo()
 
     def _load_cnn(self):
-        path = os.path.join(Config.MODELS_FOLDER, "cnn_model.pt")
+        path = os.path.join(Config.MODELS_FOLDER, "cnn_model.pth")
         if not os.path.exists(path):
             print("CNN model not found. Using mock.")
             return None
@@ -106,8 +106,8 @@ class ModelService:
     def _predict_cnn(self, image_path: str) -> dict:
         if self.cnn_model is None:
             return {
-                "disease":    "Leaf Blast",
-                "confidence": 0.87
+                "disease":    "Brown Spot",
+                "confidence": 0.99
             }
 
         from torchvision import transforms
@@ -127,7 +127,7 @@ class ModelService:
             probs = torch.softmax(output, dim=1)
             conf, idx = torch.max(probs, dim=1)
 
-        classes = ["Bacterial_Leaf_Blight", "Brown_Spot", "Leaf_Smut"]
+        classes = ["Bacterial Leaf Blight", "Brown Spot", "Leaf Smut"]
         return {
             "disease":    classes[idx.item()],
             "confidence": round(conf.item(), 4)
@@ -136,8 +136,8 @@ class ModelService:
     def _predict_resnet(self, image_path: str) -> dict:
         if self.resnet_model is None:
             return {
-                "disease":    "Leaf Blast",
-                "confidence": 0.93
+                "disease":    "Brown Spot",
+                "confidence": 0.45
             }
         # TODO: real inference when resnet_model.pt is ready
 
@@ -164,7 +164,7 @@ class ModelService:
         confidence = round(float(box.conf), 4)
         x1, y1, x2, y2 = box.xyxy[0].tolist()
 
-        classes = ["Leaf Blast", "Brown Spot", "Bacterial Blight", "Tungro", "Healthy"]
+        classes = ["Bacterial Leaf Blight", "Brown Spot", "Leaf Smut"]
         disease = classes[cls_id] if cls_id < len(classes) else "Unknown"
 
         return {
