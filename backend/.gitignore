@@ -4,6 +4,9 @@ venv/
 # Uploads — temp images
 uploads/
 
+app/models/*.pt
+app/models/*.pth
+
 # Python cache
 __pycache__/
 *.pyc
