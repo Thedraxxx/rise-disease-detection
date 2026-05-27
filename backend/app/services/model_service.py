@@ -8,27 +8,34 @@ from config import Config
 
 logger = logging.getLogger(__name__)
 
-# CNN architecture
 class CNN(nn.Module):
-    def __init__(self):
+    def __init__(self, num_classes=3):
         super().__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(3, 32, 3, 1),
+            nn.Conv2d(3, 32, 3, padding=1),
+            nn.BatchNorm2d(32),
             nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-            nn.Conv2d(32, 64, 3, 1),
+            nn.MaxPool2d(2),
+            nn.Conv2d(32, 64, 3, padding=1),
+            nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-            nn.Conv2d(64, 128, 3, 1),
+            nn.MaxPool2d(2),
+            nn.Conv2d(64, 128, 3, padding=1),
+            nn.BatchNorm2d(128),
             nn.ReLU(),
-            nn.MaxPool2d(2, 2)
+            nn.MaxPool2d(2),
+            nn.Conv2d(128, 256, 3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.MaxPool2d(2)
         )
         self.pool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(128, 128),
+            nn.Linear(256, 128),
             nn.ReLU(),
-            nn.Linear(128, 3)
+            nn.Dropout(0.5),
+            nn.Linear(128, num_classes)
         )
 
     def forward(self, x):
@@ -73,8 +80,17 @@ class ModelService:
             return None
         try:
             model = models.resnet50(weights=None)
-            model.fc = nn.Linear(model.fc.in_features, 3)
-            model.load_state_dict(torch.load(path, map_location="cpu"))
+            num_ftrs = model.fc.in_features
+            model.fc = nn.Sequential(
+                nn.Dropout(0.5),
+                nn.Linear(num_ftrs, 3)
+            )
+
+            # friend saved full checkpoint not just weights
+            checkpoint = torch.load(path, map_location="cpu")
+            print("Checkpoint keys:", checkpoint.keys())
+            model.load_state_dict(checkpoint["model_state_dict"])
+
             model.eval()
             print("[DEBUG] ResNet loaded successfully!")
             return model
@@ -97,44 +113,30 @@ class ModelService:
             print(f"[ERROR] Failed to load YOLOv8: {e}")
             return None
 
-    # def predict_all(self, image_path: str) -> dict:
-    #     cnn_result    = self._predict_cnn(image_path)
-    #     resnet_result = self._predict_resnet(image_path)
-    #     yolo_result   = self._predict_yolo(image_path)
-    #     best_model    = self._get_best_model(cnn_result, resnet_result, yolo_result)
-
-    #     return {
-    #         "cnn":        cnn_result,
-    #         "resnet":     resnet_result,
-    #         "yolo":       yolo_result,
-    #         "best_model": best_model
-    #     }
-
     def predict_all(self, image_path: str) -> dict:
         yolo_result = self._predict_yolo(image_path)
- 
-    # If YOLO finds nothing, skip CNN and ResNet
+
+        # if YOLO finds nothing, skip CNN and ResNet
         if yolo_result["disease"] == "Unknown":
-           return {
-            "cnn":        {"disease": "N/A", "confidence": 0.0},
-            "resnet":     {"disease": "N/A", "confidence": 0.0},
-            "yolo":       yolo_result,
-            "best_model": "yolo",
-            "not_relevant": True
-        }
+            return {
+                "cnn":          {"disease": "N/A", "confidence": 0.0},
+                "resnet":       {"disease": "N/A", "confidence": 0.0},
+                "yolo":         yolo_result,
+                "best_model":   "yolo",
+                "not_relevant": True
+            }
 
         cnn_result    = self._predict_cnn(image_path)
         resnet_result = self._predict_resnet(image_path)
         best_model    = self._get_best_model(cnn_result, resnet_result, yolo_result)
 
         return {
-        "cnn":        cnn_result,
-        "resnet":     resnet_result,
-        "yolo":       yolo_result,
-        "best_model": best_model,
-        "not_relevant": False
+            "cnn":          cnn_result,
+            "resnet":       resnet_result,
+            "yolo":         yolo_result,
+            "best_model":   best_model,
+            "not_relevant": False
         }
-    
 
     def _predict_cnn(self, image_path: str) -> dict:
         if self.cnn_model is None:
